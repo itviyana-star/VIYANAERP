@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Viyana OIMS</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<style>
+/* POS System Styles */
+body{font-family:sans-serif;background:#f5f5f5;margin:0;padding:0;}
+header{background:#2e8b57;color:#fff;padding:12px;text-align:center;font-size:20px;}
+.container{display:flex;gap:12px;padding:12px;}
+nav{width:180px;background:#fff;padding:12px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+nav button{display:block;width:100%;margin-bottom:6px;padding:8px;border:none;background:#eee;border-radius:4px;cursor:pointer;}
+nav button.active{background:#2e8b57;color:#fff;font-weight:600;}
+nav button:focus {outline:2px solid #2e8b57;outline-offset:2px;}
+main{flex:1;background:#fff;padding:12px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:6px;border-bottom:1px solid #ddd;text-align:left;}
+input,textarea,select{padding:6px;width:100%;box-sizing:border-box;margin-top:4px;}
+.btn{padding:6px 10px;background:#2e8b57;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+.btn:focus {outline:2px solid #ffa500;outline-offset:2px;}
+.search-box {margin:12px 0;padding:8px;background:#f8f9fa;border-radius:4px;}
+.search-box input {width:300px;margin-right:8px;}
+hr{margin:12px 0;}
+.profit-positive{color:#2e8b57;font-weight:bold;}
+.profit-negative{color:#dc3545;font-weight:bold;}
+.projection-box {background:#f8f9fa;padding:12px;border-radius:6px;margin:12px 0;border-left:4px solid #2e8b57;}
+.projection-box h4 {margin:0 0 8px 0;color:#2e8b57;}
+.expired {color:#dc3545;font-weight:bold;}
+.expiring-soon {color:#ff9800;font-weight:bold;}
+.expiry-alert-box {background:#fff3cd;padding:12px;border-radius:6px;margin:12px 0;border-left:4px solid #ffc107;}
+.expiry-alert-box h4 {margin:0 0 8px 0;color:#856404;}
+.alert-item {color:#dc3545;font-weight:bold;margin:4px 0;}
+.highlight {background-color: #fff3cd;}
+.form-row {margin-bottom:12px;}
+.form-row label {display:block;margin-bottom:4px;font-weight:bold;}
+:focus {outline:2px solid #2e8b57 !important;outline-offset:2px !important;}
+.current-focused {background-color: #e3f2fd !important;}
+.nav-focused {background-color: #ffeb3b !important; color: #000 !important;}
+.auto-export-box {background:#e8f5e8;padding:12px;border-radius:6px;margin:12px 0;border-left:4px solid #2e8b57;}
+.auto-export-box h4 {margin:0 0 8px 0;color:#2e8b57;}
+.barcode-box {background:#e3f2fd;padding:12px;border-radius:6px;margin:12px 0;border-left:4px solid #2196f3;}
+.barcode-box h4 {margin:0 0 8px 0;color:#1565c0;}
+.customer-badge {background:#e8f5e8;padding:4px 8px;border-radius:12px;font-size:12px;margin-left:8px;}
+
+/* Security Modal Styles */
+.security-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+.security-modal-content {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid #ff4444;
+}
+
+.security-modal h2 {
+    color: #ff4444;
+    margin-bottom: 20px;
+    font-size: 24px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.security-modal p {
+    margin-bottom: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.security-modal-warning {
+    background: rgba(255, 68, 68, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ff4444;
+    margin: 15px 0;
+}
+
+.security-modal-count {
+    font-weight: bold;
+    color: #ffcc00;
+    font-size: 18px;
+}
+
+.security-modal-btn {
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background 0.3s;
+}
+
+.security-modal-btn:hover {
+    background: #cc0000;
+}
+
+.security-source-view {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 10001;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.security-source-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.security-source-header {
+    background: #2e8b57;
+    color: white;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.security-source-textarea {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    resize: none;
+    background: #f8f9fa;
+}
+
+.security-source-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.security-source-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.security-download-btn {
+    background: #2e8b57;
+    color: white;
+}
+
+.security-close-btn {
+    background: #6c757d;
+    color: white;
+}
+
+/* Disable text selection */
+body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Allow selection in specific areas */
+.security-source-textarea,
+input, textarea {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+</style>
+</head>
+<body>
+<!-- Security Modal -->
+<div id="securityModal" class="security-modal">
+    <div class="security-modal-content">
+        <h2>🚨 SECURITY ALERT</h2>
+        <div class="security-modal-warning">
+            <p><strong>UNAUTHORIZED ACCESS DETECTED</strong></p>
+            <p>Then there is the warning; your system may be damaged by unauthorized access.</p>
+        </div>
+        <p>Your activity is being monitored. Repeated attempts may result in account suspension.</p>
+        <p>To deactivate <span id="securityAttemptCount" class="security-modal-count">0</span>/5</p>
+        <button class="security-modal-btn" onclick="closeSecurityModal()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Source Code Viewer -->
+<div id="securitySourceView" class="security-source-view">
+    <div class="security-source-content">
+        <div class="security-source-header">
+            <h3>🔍 Source Code View (Read Only)</h3>
+            <span>All access has been logged</span>
+        </div>
+        <textarea id="securitySourceText" class="security-source-textarea" readonly></textarea>
+        <div class="security-source-buttons">
+            <button class="security-download-btn" onclick="downloadSourceCode()">📥 Download as HTML</button>
+            <button class="security-close-btn" onclick="closeSourceView()">❌ Close</button>
+        </div>
+    </div>
+</div>
+
+<header>VIYANA OIMS</header>
+<div class="container">
+<nav>
+<button class="navbtn active" data-tab="dashboard" tabindex="0">Dashboard</button>
+<button class="navbtn" data-tab="employees" tabindex="0">Employees</button>
+<button class="navbtn" data-tab="suppliers" tabindex="0">Suppliers</button>
+<button class="navbtn" data-tab="inventory" tabindex="0">Inventory</button>
+<button class="navbtn" data-tab="sales" tabindex="0">Sales</button>
+<button class="navbtn" data-tab="customers" tabindex="0">Customers</button>
+<button class="navbtn" data-tab="expenses" tabindex="0">Expenses</button>
+<hr>
+<button class="btn" onclick="exportExcel()" tabindex="0">Export All to Excel</button>
+<button class="btn" onclick="exportCSV()" tabindex="0">Export CSV Now</button>
+<button class="btn" onclick="resetDB()" tabindex="0">Reset All Data</button>
+</nav>
+<main id="main">
+<section id="dashboard" class="tabpane">
+<h2>Dashboard</h2>
+
+<!-- Auto Export Status -->
+<div class="auto-export-box">
+    <h4>📅 Automatic Monthly Export</h4>
+    <p>Status: <span id="exportStatus">Active</span></p>
+    <p>Next Auto Export: <span id="nextExportDate">Calculating...</span></p>
+    <p>Last Export: <span id="lastExportDate">Never</span></p>
+    <button class="btn" onclick="manualExport()" tabindex="0">Export Monthly Report Now</button>
+</div>
+
+<!-- Barcode Scanner Section -->
+<div class="barcode-box">
+    <h4>📦 Barcode Scanner</h4>
+    <div class="form-row">
+        <label for="barcodeInput">Scan Barcode </label>
+        <input type="text" id="barcodeInput" placeholder="Click here and scan barcode..." tabindex="0" 
+               onkeydown="handleBarcodeInput(event)" onfocus="this.select()">
+    </div>
+    <div id="barcodeResult" style="margin-top:8px;padding:8px;background:white;border-radius:4px;min-height:20px;">
+        Ready for barcode scan...
+    </div>
+    <button class="btn" onclick="clearBarcode()" tabindex="0" style="margin-top:8px;">Clear Barcode</button>
+</div>
+
+<p>Total Sales: Rs. <span id="dashSales">0</span></p>
+<p>Total Expenses: Rs. <span id="dashExpenses">0</span></p>
+<p>Total Employee Salaries: Rs. <span id="dashSalaries">0</span></p>
+<p>Total Cost of Goods: Rs. <span id="dashCOGS">0</span></p>
+<p>Gross Profit: Rs. <span id="dashGrossProfit">0</span></p>
+<p>Net Profit: Rs. <span id="dashProfit">0</span></p>
+
+<!-- Expiry Alerts Section -->
+<div class="expiry-alert-box">
+    <h4>⚠️ Product Expiry Alerts (Next 14 Days)</h4>
+    <div id="expiryAlerts">
+        <p>No expiry alerts at the moment.</p>
+    </div>
+</div>
+
+</section>
+
+<section id="employees" class="tabpane" style="display:none">
+<h2>Employees</h2>
+
+<!-- Employee Search -->
+<div class="search-box">
+    <input type="text" id="employeeSearch" placeholder="Search by Employee ID, Name, or Position..." onkeyup="searchEmployees()" tabindex="0">
+    <button class="btn" onclick="clearEmployeeSearch()" tabindex="0">Clear Search</button>
+</div>
+
+<form id="empForm">
+<div class="form-row">
+    <label for="empId">Employee ID</label>
+    <input id="empId" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="empName">Name</label>
+    <input id="empName" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="empPosition">Position</label>
+    <input id="empPosition" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="empDate">Date of Employment</label>
+    <input type="date" id="empDate" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="empSalary">Salary/Hour (Rs.)</label>
+    <input type="number" id="empSalary" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="empHours">Working Hours</label>
+    <input type="number" id="empHours" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="empTax">Tax %</label>
+    <input type="number" id="empTax" value="0" tabindex="0">
+</div>
+<button class="btn" type="submit" tabindex="0">Add Employee</button>
+</form>
+<h3>Employee List (editable)</h3>
+<table id="empTable">
+<thead><tr>
+    <th>Emp ID</th>
+    <th>Name</th>
+    <th>Position</th>
+    <th>Employment Date</th>
+    <th>Salary/Hour (Rs.)</th>
+    <th>Hours</th>
+    <th>Tax %</th>
+    <th>Total Salary (Rs.)</th>
+    <th>Action</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section id="suppliers" class="tabpane" style="display:none">
+<h2>Suppliers</h2>
+<form id="supForm">
+<div class="form-row">
+    <label for="supName">Name</label>
+    <input id="supName" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="supContact">Contact</label>
+    <input id="supContact" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="supNotes">Notes</label>
+    <textarea id="supNotes" tabindex="0"></textarea>
+</div>
+<button class="btn" type="submit" tabindex="0">Add Supplier</button>
+</form>
+<h3>Supplier List</h3>
+<table id="supTable">
+<thead><tr><th>Name</th><th>Contact</th><th>Notes</th><th>Action</th></tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section id="inventory" class="tabpane" style="display:none">
+<h2>Inventory / Products</h2>
+
+<!-- Product Search -->
+<div class="search-box">
+    <input type="text" id="productSearch" placeholder="Search by Product ID, Name, or Status..." onkeyup="searchProducts()" tabindex="0">
+    <button class="btn" onclick="clearProductSearch()" tabindex="0">Clear Search</button>
+</div>
+
+<form id="invForm">
+<div class="form-row">
+    <label for="invId">Product ID / Barcode</label>
+    <input id="invId" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invName">Product Name</label>
+    <input id="invName" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invBarcode">Barcode (Optional)</label>
+    <input id="invBarcode" placeholder="Auto-generated if empty" tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invQty">Quantity Purchased</label>
+    <input type="number" id="invQty" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invCostPrice">Cost Price per Unit (Rs.)</label>
+    <input type="number" id="invCostPrice" required step="0.01" tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invPrice">Sale Price per Unit (Rs.)</label>
+    <input type="number" id="invPrice" required step="0.01" tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invManufactureDate">Manufacturing Date</label>
+    <input type="date" id="invManufactureDate" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="invExpiryDate">Expiration Date</label>
+    <input type="date" id="invExpiryDate" required tabindex="0">
+</div>
+<button class="btn" type="submit" tabindex="0">Add Purchase</button>
+</form>
+
+<!-- Projection/Quote Section -->
+<div class="projection-box">
+    <h4>📊 Inventory Summary</h4>
+    <p>Total Inventory Purchased Cost: Rs. <span id="totalInventoryCost">0</span></p>
+    <p>Current Stock Value (at cost): Rs. <span id="currentStockValue">0</span></p>
+    <p>Potential Revenue from Current Stock: Rs. <span id="potentialRevenue">0</span></p>
+    <p>Potential Profit from Current Stock: Rs. <span id="potentialProfit">0</span></p>
+    <p>Expired/Expiring Items: <span id="expiryAlert">0</span></p>
+</div>
+
+<h3>Inventory Purchase History</h3>
+<table id="invTable">
+<thead><tr>
+    <th>Product ID</th>
+    <th>Barcode</th>
+    <th>Product Name</th>
+    <th>Qty Purchased</th>
+    <th>Cost/Unit (Rs.)</th>
+    <th>Total Cost (Rs.)</th>
+    <th>Sale Price (Rs.)</th>
+    <th>Manufacture Date</th>
+    <th>Expiry Date</th>
+    <th>Status</th>
+    <th>Current Stock</th>
+    <th>Qty Sold</th>
+    <th>Profit/Unit (Rs.)</th>
+    <th>Total Profit (Rs.)</th>
+    <th>Potential Profit (Rs.)</th>
+    <th>Action</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section id="sales" class="tabpane" style="display:none">
+<h2>Sales (POS)</h2>
+
+<!-- Barcode Quick Sale -->
+<div class="barcode-box">
+    <h4>📦 Quick Sale with Barcode</h4>
+    <div class="form-row">
+        <label for="quickBarcode">Scan Barcode for Quick Sale</label>
+        <input type="text" id="quickBarcode" placeholder="Scan barcode here..." tabindex="0" 
+               onkeydown="handleQuickSaleBarcode(event)" onfocus="this.select()">
+    </div>
+    <div id="quickSaleResult" style="margin-top:8px;padding:8px;background:white;border-radius:4px;min-height:20px;">
+        Ready for barcode scan...
+    </div>
+</div>
+
+<form id="salesForm">
+<div class="form-row">
+    <label for="saleCustomer">Customer (Optional)</label>
+    <select id="saleCustomer" tabindex="0">
+        <option value="">Walk-in Customer</option>
+    </select>
+</div>
+<div class="form-row">
+    <label for="saleItem">Item Sold</label>
+    <select id="saleItem" tabindex="0"></select>
+</div>
+<div class="form-row">
+    <label for="saleQty">Qty</label>
+    <input type="number" id="saleQty" min="1" value="1" tabindex="0">
+</div>
+<button class="btn" type="submit" tabindex="0">Add Sale</button>
+</form>
+<h3>Sales List</h3>
+<table id="salesTable">
+<thead><tr>
+    <th>Customer</th>
+    <th>Product ID</th>
+    <th>Item</th>
+    <th>Qty</th>
+    <th>Unit Cost (Rs.)</th>
+    <th>Sale Price (Rs.)</th>
+    <th>Revenue (Rs.)</th>
+    <th>Profit (Rs.)</th>
+    <th>Date</th>
+    <th>Action</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section id="customers" class="tabpane" style="display:none">
+<h2>Customer Management</h2>
+
+<!-- Customer Search -->
+<div class="search-box">
+    <input type="text" id="customerSearch" placeholder="Search by Customer ID, Name, Phone, or Email..." onkeyup="searchCustomers()" tabindex="0">
+    <button class="btn" onclick="clearCustomerSearch()" tabindex="0">Clear Search</button>
+</div>
+
+<form id="customerForm">
+<div class="form-row">
+    <label for="customerId">Customer ID</label>
+    <input id="customerId" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="customerName">Full Name</label>
+    <input id="customerName" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="customerPhone">Phone Number</label>
+    <input id="customerPhone" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="customerEmail">Email Address</label>
+    <input type="email" id="customerEmail" tabindex="0">
+</div>
+<div class="form-row">
+    <label for="customerAddress">Address</label>
+    <textarea id="customerAddress" tabindex="0"></textarea>
+</div>
+<div class="form-row">
+    <label for="customerType">Customer Type</label>
+    <select id="customerType" tabindex="0">
+        <option value="regular">Regular</option>
+        <option value="premium">Premium</option>
+        <option value="wholesale">Wholesale</option>
+        <option value="corporate">Corporate</option>
+    </select>
+</div>
+<div class="form-row">
+    <label for="customerDiscount">Discount %</label>
+    <input type="number" id="customerDiscount" min="0" max="100" value="0" tabindex="0">
+</div>
+<button class="btn" type="submit" tabindex="0">Add Customer</button>
+</form>
+
+<h3>Customer List</h3>
+<table id="customerTable">
+<thead><tr>
+    <th>Customer ID</th>
+    <th>Name</th>
+    <th>Phone</th>
+    <th>Email</th>
+    <th>Type</th>
+    <th>Discount %</th>
+    <th>Total Spent (Rs.)</th>
+    <th>Last Purchase</th>
+    <th>Action</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section id="expenses" class="tabpane" style="display:none">
+<h2>Expenses</h2>
+<form id="expForm">
+<div class="form-row">
+    <label for="expTitle">Title</label>
+    <input id="expTitle" required tabindex="0">
+</div>
+<div class="form-row">
+    <label for="expAmount">Amount (Rs.)</label>
+    <input type="number" id="expAmount" required tabindex="0">
+</div>
+<button class="btn" type="submit" tabindex="0">Add Expense</button>
+</form>
+<table id="expTable">
+<thead><tr><th>Title</th><th>Amount (Rs.)</th><th>Action</th></tr></thead>
+<tbody></tbody>
+</table>
+</section>
+</main>
+</div>
+
+<script>
+// ================= SECURITY DETERRENT SYSTEM =================
+const SECURITY_CONFIG = {
+    maxAttempts: 80000,
+    logEndpoint: '/api/log-suspicious',
+    secretToken: 'pos-security-token-2024',
+    sessionKey: 'security_attempts'
+};
+
+let securityAttempts = 0;
+
+function initializeSecurity() {
+    securityAttempts = parseInt(sessionStorage.getItem(SECURITY_CONFIG.sessionKey) || '0');
+    
+    setupDevToolsDetection();
+    
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        logSecurityEvent('RIGHT_CLICK');
+        return false;
+    });
+    
+    document.addEventListener('copy', (e) => {
+        e.preventDefault();
+        logSecurityEvent('COPY');
+        return false;
+    });
+    
+    document.addEventListener('cut', (e) => {
+        e.preventDefault();
+        logSecurityEvent('CUT');
+        return false;
+    });
+    
+    console.log('🔒 Security system initialized');
+}
+
+function setupDevToolsDetection() {
+    document.addEventListener('keydown', (e) => {
+        if (e.keyCode === 123) { // F12
+            e.preventDefault();
+            handleSecurityViolation('F12');
+            return false;
+        }
+        
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { // Ctrl+Shift+I
+            e.preventDefault();
+            handleSecurityViolation('CTRL_SHIFT_I');
+            return false;
+        }
+        
+        if (e.ctrlKey && e.keyCode === 85) { // Ctrl+U
+            e.preventDefault();
+            handleSecurityViolation('CTRL_U');
+            return false;
+        }
+    });
+    
+    let lastTriggerTime = 0;
+    setInterval(() => {
+        const debuggerTrigger = Date.now();
+        if (debuggerTrigger - lastTriggerTime > 200) {
+            debugger;
+        }
+        lastTriggerTime = Date.now();
+    }, 500);
+}
+
+function handleSecurityViolation(type) {
+    securityAttempts++;
+    sessionStorage.setItem(SECURITY_CONFIG.sessionKey, securityAttempts.toString());
+    
+    logSecurityEvent(type);
+    
+    if (securityAttempts <= 59) {
+        showSecurityModal();
+    } else {
+        showSourceCode();
+    }
+}
+
+function showSecurityModal() {
+    const modal = document.getElementById('securityModal');
+    const countSpan = document.getElementById('securityAttemptCount');
+    
+    countSpan.textContent = securityAttempts;
+    modal.style.display = 'flex';
+    
+    setTimeout(() => {
+        if (modal.style.display === 'flex') {
+            closeSecurityModal();
+        }
+    }, 5000);
+}
+
+function closeSecurityModal() {
+    document.getElementById('securityModal').style.display = 'none';
+}
+
+function showSourceCode() {
+    const sourceView = document.getElementById('securitySourceView');
+    const sourceText = document.getElementById('securitySourceText');
+    
+    const htmlSource = `<!-- SECURITY NOTICE: Source code accessed through security deterrent system -->
+${document.documentElement.outerHTML}`;
+    
+    sourceText.value = htmlSource;
+    sourceView.style.display = 'block';
+}
+
+function closeSourceView() {
+    document.getElementById('securitySourceView').style.display = 'none';
+}
+
+function downloadSourceCode() {
+    const source = document.getElementById('securitySourceText').value;
+    const blob = new Blob([source], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pos-system-source.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function logSecurityEvent(eventType) {
+    const logData = {
+        timestamp: new Date().toISOString(),
+        eventType: eventType,
+        count: securityAttempts,
+        pageUrl: window.location.href,
+        userAgent: navigator.userAgent,
+        sessionId: Math.random().toString(36).substr(2, 9),
+        secret: SECURITY_CONFIG.secretToken
+    };
+    
+    console.warn('🔒 Security Event:', logData);
+    
+    // In a real implementation, you would send this to your backend
+    // fetch(SECURITY_CONFIG.logEndpoint, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(logData)
+    // }).catch(console.error);
+}
+
+// ================= POS SYSTEM CODE =================
+let currentFocusIndex = 0;
+let currentSection = 'dashboard';
+let focusableElements = [];
+
+const AUTO_EXPORT_KEY = 'bakery_auto_export';
+let autoExportConfig = {
+    enabled: true,
+    lastExport: null,
+    nextExport: null
+};
+
+let barcodeBuffer = '';
+let barcodeTimeout;
+
+function initializeAutoExport() {
+    const savedConfig = localStorage.getItem(AUTO_EXPORT_KEY);
+    if (savedConfig) {
+        autoExportConfig = JSON.parse(savedConfig);
+    }
+    
+    if (!autoExportConfig.nextExport) {
+        calculateNextExportDate();
+    }
+    
+    checkAutoExport();
+    updateExportDisplay();
+    setInterval(checkAutoExport, 60 * 60 * 1000);
+}
+
+function calculateNextExportDate() {
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    lastDay.setHours(23, 59, 59, 999);
+    
+    autoExportConfig.nextExport = lastDay.getTime();
+    saveAutoExportConfig();
+}
+
+function checkAutoExport() {
+    if (!autoExportConfig.enabled) return;
+    
+    const now = new Date().getTime();
+    const nextExport = autoExportConfig.nextExport;
+    
+    if (now >= nextExport) {
+        performAutoExport();
+        calculateNextExportDate();
+        updateExportDisplay();
+    }
+}
+
+function performAutoExport() {
+    const now = new Date();
+    const monthYear = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const fileName = `Monthly_Report_${monthYear.replace(' ', '_')}.csv`;
+    
+    exportToCSV(fileName);
+    
+    autoExportConfig.lastExport = now.getTime();
+    saveAutoExportConfig();
+    
+    alert(`📊 Monthly report for ${monthYear} has been automatically exported as ${fileName}`);
+}
+
+function manualExport() {
+    performAutoExport();
+    updateExportDisplay();
+}
+
+function updateExportDisplay() {
+    const statusEl = document.getElementById('exportStatus');
+    const nextExportEl = document.getElementById('nextExportDate');
+    const lastExportEl = document.getElementById('lastExportDate');
+    
+    if (statusEl) {
+        statusEl.textContent = autoExportConfig.enabled ? 'Active' : 'Disabled';
+    }
+    
+    if (nextExportEl && autoExportConfig.nextExport) {
+        const nextDate = new Date(autoExportConfig.nextExport);
+        nextExportEl.textContent = nextDate.toLocaleDateString() + ' at 23:59';
+    }
+    
+    if (lastExportEl && autoExportConfig.lastExport) {
+        const lastDate = new Date(autoExportConfig.lastExport);
+        lastExportEl.textContent = lastDate.toLocaleDateString() + ' ' + lastDate.toLocaleTimeString();
+    } else {
+        lastExportEl.textContent = 'Never';
+    }
+}
+
+function saveAutoExportConfig() {
+    localStorage.setItem(AUTO_EXPORT_KEY, JSON.stringify(autoExportConfig));
+}
+
+function handleBarcodeInput(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        processBarcode(barcodeBuffer);
+        barcodeBuffer = '';
+        clearTimeout(barcodeTimeout);
+    } else {
+        barcodeBuffer += event.key;
+        clearTimeout(barcodeTimeout);
+        barcodeTimeout = setTimeout(() => {
+            barcodeBuffer = '';
+        }, 100);
+    }
+}
+
+function handleQuickSaleBarcode(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        processQuickSaleBarcode(barcodeBuffer);
+        barcodeBuffer = '';
+        clearTimeout(barcodeTimeout);
+    } else {
+        barcodeBuffer += event.key;
+        clearTimeout(barcodeTimeout);
+        barcodeTimeout = setTimeout(() => {
+            barcodeBuffer = '';
+        }, 100);
+    }
+}
+
+function processBarcode(barcode) {
+    const resultDiv = document.getElementById('barcodeResult');
+    const product = DB.inventory.find(item => item.barcode === barcode);
+    
+    if (product) {
+        const salesData = getInventorySalesData();
+        const currentStock = salesData[product.id] ? salesData[product.id].currentStock : product.qty;
+        
+        resultDiv.innerHTML = `
+            <strong>✅ Product Found!</strong><br>
+            <strong>Product:</strong> ${product.name} (${product.id})<br>
+            <strong>Barcode:</strong> ${barcode}<br>
+            <strong>Current Stock:</strong> ${currentStock}<br>
+            <strong>Sale Price:</strong> Rs. ${product.price}<br>
+            <strong>Status:</strong> ${currentStock > 0 ? 'In Stock' : 'Out of Stock'}
+        `;
+    } else {
+        const productById = DB.inventory.find(item => item.id === barcode);
+        if (productById) {
+            const salesData = getInventorySalesData();
+            const currentStock = salesData[productById.id] ? salesData[productById.id].currentStock : productById.qty;
+            
+            resultDiv.innerHTML = `
+                <strong>✅ Product Found by ID!</strong><br>
+                <strong>Product:</strong> ${productById.name} (${productById.id})<br>
+                <strong>Barcode:</strong> ${productById.barcode || 'Not set'}<br>
+                <strong>Current Stock:</strong> ${currentStock}<br>
+                <strong>Sale Price:</strong> Rs. ${productById.price}<br>
+                <strong>Status:</strong> ${currentStock > 0 ? 'In Stock' : 'Out of Stock'}
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <strong>❌ Product Not Found</strong><br>
+                Barcode/ID: ${barcode}<br>
+                <em>This product is not in the inventory.</em>
+            `;
+        }
+    }
+}
+
+function processQuickSaleBarcode(barcode) {
+    const resultDiv = document.getElementById('quickSaleResult');
+    let foundProduct = DB.inventory.find(item => item.barcode === barcode);
+    
+    if (!foundProduct) {
+        foundProduct = DB.inventory.find(item => item.id === barcode);
+    }
+    
+    if (foundProduct) {
+        const salesData = getInventorySalesData();
+        const currentStock = salesData[foundProduct.id] ? salesData[foundProduct.id].currentStock : foundProduct.qty;
+        
+        if (currentStock > 0) {
+            document.getElementById('saleItem').value = foundProduct.id;
+            document.getElementById('saleQty').value = 1;
+            document.getElementById('saleQty').focus();
+            
+            resultDiv.innerHTML = `
+                <strong>✅ Ready for Sale!</strong><br>
+                <strong>Product:</strong> ${foundProduct.name}<br>
+                <strong>Price:</strong> Rs. ${foundProduct.price}<br>
+                <strong>Stock:</strong> ${currentStock}<br>
+                <em>Quantity set to 1. Press Enter in quantity field or click "Add Sale".</em>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <strong>❌ Out of Stock</strong><br>
+                <strong>Product:</strong> ${foundProduct.name}<br>
+                <em>This product is currently out of stock.</em>
+            `;
+        }
+    } else {
+        resultDiv.innerHTML = `
+            <strong>❌ Product Not Found</strong><br>
+            Barcode/ID: ${barcode}<br>
+            <em>This product is not in the inventory.</em>
+        `;
+    }
+}
+
+function clearBarcode() {
+    document.getElementById('barcodeInput').value = '';
+    document.getElementById('barcodeResult').innerHTML = 'Ready for barcode scan...';
+    document.getElementById('quickBarcode').value = '';
+    document.getElementById('quickSaleResult').innerHTML = 'Ready for barcode scan...';
+    barcodeBuffer = '';
+}
+
+function searchCustomers() {
+    currentCustomerSearch = document.getElementById('customerSearch').value.toLowerCase();
+    render();
+}
+
+function clearCustomerSearch() {
+    document.getElementById('customerSearch').value = '';
+    currentCustomerSearch = '';
+    render();
+}
+
+function filterCustomers(customers) {
+    if (!currentCustomerSearch) return customers;
+    
+    return customers.filter(customer => 
+        customer.id.toLowerCase().includes(currentCustomerSearch) ||
+        customer.name.toLowerCase().includes(currentCustomerSearch) ||
+        customer.phone.toLowerCase().includes(currentCustomerSearch) ||
+        (customer.email && customer.email.toLowerCase().includes(currentCustomerSearch))
+    );
+}
+
+function exportToCSV(filename = 'BakeryReport.csv') {
+    const csvData = [];
+    
+    csvData.push(`Monthly Report Generated: ${new Date().toLocaleString()}`);
+    csvData.push('');
+    
+    csvData.push('EMPLOYEES');
+    csvData.push('EmployeeID,Name,Position,EmploymentDate,SalaryPerHour,Hours,Tax,TotalSalary');
+    DB.employees.forEach(e => {
+        const net = e.salary * e.hours * (1 - (e.tax || 0) / 100);
+        csvData.push(`${e.id},${e.name},${e.position},${e.employmentDate},${e.salary},${e.hours},${e.tax || 0},${net}`);
+    });
+    csvData.push('');
+    
+    csvData.push('INVENTORY');
+    csvData.push('ProductID,Barcode,ProductName,QuantityPurchased,CostPerUnit,TotalCost,SalePrice,ManufacturingDate,ExpiryDate,CurrentStock,QuantitySold,TotalProfit');
+    const salesData = getInventorySalesData();
+    DB.inventory.forEach(i => {
+        const qtySold = salesData[i.id] ? salesData[i.id].qtySold : 0;
+        const currentStock = salesData[i.id] ? salesData[i.id].currentStock : i.qty;
+        const totalProfit = salesData[i.id] ? salesData[i.id].totalProfit : 0;
+        csvData.push(`${i.id},${i.barcode || ''},${i.name},${i.qty},${i.costPrice},${i.qty * i.costPrice},${i.price},${i.manufactureDate},${i.expiryDate},${currentStock},${qtySold},${totalProfit}`);
+    });
+    csvData.push('');
+    
+    csvData.push('SALES');
+    csvData.push('Customer,ProductID,ProductName,Quantity,UnitCost,SalePrice,Revenue,Profit,Date');
+    DB.sales.forEach(s => {
+        const item = DB.inventory.find(inv => inv.id === s.itemId);
+        const customer = s.customerId ? DB.customers.find(c => c.id === s.customerId) : null;
+        const cost = item?.costPrice || 0;
+        const price = item?.price || 0;
+        const revenue = price * s.qty;
+        const profit = (price - cost) * s.qty;
+        csvData.push(`${customer?.name || 'Walk-in'},${item?.id || s.itemId},${item?.name || 'Unknown'},${s.qty},${cost},${price},${revenue},${profit},${s.date}`);
+    });
+    csvData.push('');
+    
+    csvData.push('CUSTOMERS');
+    csvData.push('CustomerID,Name,Phone,Email,Type,Discount%,TotalSpent,LastPurchase');
+    DB.customers.forEach(c => {
+        const customerSales = DB.sales.filter(s => s.customerId === c.id);
+        const totalSpent = customerSales.reduce((sum, sale) => {
+            const item = DB.inventory.find(inv => inv.id === sale.itemId);
+            return sum + (sale.qty * (item?.price || 0));
+        }, 0);
+        const lastPurchase = customerSales.length > 0 ? 
+            customerSales[customerSales.length - 1].date : 'Never';
+        
+        csvData.push(`${c.id},${c.name},${c.phone},${c.email || ''},${c.type},${c.discount || 0},${totalSpent},${lastPurchase}`);
+    });
+    csvData.push('');
+    
+    csvData.push('EXPENSES');
+    csvData.push('Title,Amount,Date');
+    DB.expenses.forEach(ex => {
+        csvData.push(`${ex.title},${ex.amount},${new Date().toLocaleDateString()}`);
+    });
+    csvData.push('');
+    
+    csvData.push('SUMMARY');
+    const totalSales = DB.sales.reduce((a,v) => {
+        const item = DB.inventory.find(inv => inv.id === v.itemId);
+        return a + (v.qty * (item?.price || 0));
+    }, 0);
+    const totalExpenses = DB.expenses.reduce((a,v) => a + v.amount, 0);
+    const totalSalaries = DB.employees.reduce((a,e) => a + (e.salary * e.hours * (1 - (e.tax || 0) / 100)), 0);
+    const totalCOGS = DB.sales.reduce((a,v) => {
+        const item = DB.inventory.find(inv => inv.id === v.itemId);
+        return a + (v.qty * (item?.costPrice || 0));
+    }, 0);
+    
+    csvData.push(`Total Sales,${totalSales}`);
+    csvData.push(`Total Expenses,${totalExpenses}`);
+    csvData.push(`Total Salaries,${totalSalaries}`);
+    csvData.push(`Total COGS,${totalCOGS}`);
+    csvData.push(`Gross Profit,${totalSales - totalCOGS}`);
+    csvData.push(`Net Profit,${totalSales - totalExpenses - totalSalaries}`);
+    
+    const csvContent = csvData.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function initializeFocus() {
+    updateFocusableElements();
+    document.addEventListener('keydown', handleKeyNavigation);
+}
+
+function updateFocusableElements() {
+    focusableElements = [];
+    
+    const navButtons = document.querySelectorAll('nav button, nav .btn');
+    navButtons.forEach(btn => {
+        focusableElements.push({
+            element: btn,
+            type: 'nav',
+            section: 'global'
+        });
+    });
+    
+    const currentSectionEl = document.getElementById(currentSection);
+    if (currentSectionEl) {
+        const inputs = currentSectionEl.querySelectorAll('input, select, textarea, button');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden' && !input.disabled) {
+                focusableElements.push({
+                    element: input,
+                    type: 'form',
+                    section: currentSection
+                });
+            }
+        });
+        
+        const tables = currentSectionEl.querySelectorAll('table');
+        tables.forEach((table, tableIndex) => {
+            const cells = table.querySelectorAll('td[contenteditable="true"], td button');
+            cells.forEach(cell => {
+                focusableElements.push({
+                    element: cell,
+                    type: 'table',
+                    section: currentSection,
+                    tableIndex: tableIndex
+                });
+            });
+        });
+    }
+    
+    if (focusableElements.length > 0) {
+        if (currentFocusIndex >= focusableElements.length) {
+            currentFocusIndex = 0;
+        }
+        setFocus(currentFocusIndex);
+    }
+}
+
+function setFocus(index) {
+    focusableElements.forEach(item => {
+        item.element.classList.remove('current-focused', 'nav-focused');
+    });
+    
+    if (focusableElements[index]) {
+        const currentItem = focusableElements[index];
+        currentItem.element.focus();
+        
+        if (currentItem.type === 'nav') {
+            currentItem.element.classList.add('nav-focused');
+        } else {
+            currentItem.element.classList.add('current-focused');
+        }
+        
+        currentFocusIndex = index;
+    }
+}
+
+function handleKeyNavigation(e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    
+    switch(e.key) {
+        case 'ArrowUp':
+            e.preventDefault();
+            navigate(-1);
+            break;
+        case 'ArrowDown':
+            e.preventDefault();
+            navigate(1);
+            break;
+        case 'ArrowLeft':
+            e.preventDefault();
+            if (focusableElements[currentFocusIndex]?.type === 'nav') {
+                navigate(-1);
+            }
+            break;
+        case 'ArrowRight':
+            e.preventDefault();
+            if (focusableElements[currentFocusIndex]?.type === 'nav') {
+                navigate(1);
+            }
+            break;
+        case 'Enter':
+            e.preventDefault();
+            activateCurrentElement();
+            break;
+        case 'Tab':
+            setTimeout(updateFocusableElements, 10);
+            break;
+    }
+}
+
+function navigate(direction) {
+    let newIndex = currentFocusIndex + direction;
+    
+    if (newIndex < 0) {
+        newIndex = focusableElements.length - 1;
+    } else if (newIndex >= focusableElements.length) {
+        newIndex = 0;
+    }
+    
+    setFocus(newIndex);
+}
+
+function activateCurrentElement() {
+    const currentItem = focusableElements[currentFocusIndex];
+    if (!currentItem) return;
+    
+    const element = currentItem.element;
+    
+    if (currentItem.type === 'nav') {
+        if (element.dataset.tab) {
+            showTab(element.dataset.tab);
+        } else if (element.onclick) {
+            element.onclick();
+        }
+    } else if (element.type === 'submit' || element.tagName === 'BUTTON') {
+        if (element.type === 'submit') {
+            element.closest('form').dispatchEvent(new Event('submit'));
+        } else if (element.onclick) {
+            element.onclick();
+        }
+    } else if (element.contentEditable === 'true') {
+        element.focus();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    } else if (element.tagName === 'SELECT') {
+        element.focus();
+    }
+}
+
+function updateFocusOnSectionChange() {
+    currentFocusIndex = 0;
+    updateFocusableElements();
+}
+
+const DB_KEY='bakery_db_v14_lkr';
+let DB=JSON.parse(localStorage.getItem(DB_KEY)||'{"employees":[],"suppliers":[],"inventory":[],"expenses":[],"sales":[],"customers":[]}');
+function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(DB));}
+
+let currentEmployeeSearch = '';
+let currentProductSearch = '';
+let currentCustomerSearch = '';
+
+function searchEmployees() {
+    currentEmployeeSearch = document.getElementById('employeeSearch').value.toLowerCase();
+    render();
+}
+
+function clearEmployeeSearch() {
+    document.getElementById('employeeSearch').value = '';
+    currentEmployeeSearch = '';
+    render();
+}
+
+function searchProducts() {
+    currentProductSearch = document.getElementById('productSearch').value.toLowerCase();
+    render();
+}
+
+function clearProductSearch() {
+    document.getElementById('productSearch').value = '';
+    currentProductSearch = '';
+    render();
+}
+
+function filterEmployees(employees) {
+    if (!currentEmployeeSearch) return employees;
+    
+    return employees.filter(emp => 
+        emp.id.toLowerCase().includes(currentEmployeeSearch) ||
+        emp.name.toLowerCase().includes(currentEmployeeSearch) ||
+        emp.position.toLowerCase().includes(currentEmployeeSearch)
+    );
+}
+
+function filterProducts(products) {
+    if (!currentProductSearch) return products;
+    
+    return products.filter(product => 
+        product.id.toLowerCase().includes(currentProductSearch) ||
+        product.name.toLowerCase().includes(currentProductSearch) ||
+        (product.barcode && product.barcode.toLowerCase().includes(currentProductSearch)) ||
+        checkExpiryStatus(product.expiryDate).toLowerCase().includes(currentEmployeeSearch)
+    );
+}
+
+function checkExpiryStatus(expiryDate) {
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) return 'expired';
+    if (daysUntilExpiry <= 7) return 'expiring-soon';
+    if (daysUntilExpiry <= 14) return 'expiring-14-days';
+    return 'good';
+}
+
+function getExpiringProducts() {
+    const today = new Date();
+    const fourteenDaysFromNow = new Date();
+    fourteenDaysFromNow.setDate(today.getDate() + 14);
+    
+    const expiringProducts = [];
+    
+    DB.inventory.forEach(item => {
+        const expiryDate = new Date(item.expiryDate);
+        const salesData = getInventorySalesData();
+        const currentStock = salesData[item.id] ? salesData[item.id].currentStock : item.qty;
+        
+        if (currentStock > 0 && expiryDate <= fourteenDaysFromNow && expiryDate >= today) {
+            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+            expiringProducts.push({
+                id: item.id,
+                name: item.name,
+                expiryDate: item.expiryDate,
+                daysUntilExpiry: daysUntilExpiry,
+                currentStock: currentStock
+            });
+        }
+    });
+    
+    return expiringProducts.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+}
+
+function getInventorySalesData() {
+    const salesData = {};
+    
+    DB.inventory.forEach(item => {
+        salesData[item.id] = {
+            qtySold: 0,
+            totalProfit: 0,
+            currentStock: item.qty
+        };
+    });
+    
+    DB.sales.forEach(sale => {
+        const item = DB.inventory.find(inv => inv.id === sale.itemId);
+        if (item) {
+            if (salesData[item.id]) {
+                salesData[item.id].qtySold += sale.qty;
+                const profitPerUnit = item.price - item.costPrice;
+                salesData[item.id].totalProfit += profitPerUnit * sale.qty;
+                salesData[item.id].currentStock -= sale.qty;
+            }
+        }
+    });
+    
+    return salesData;
+}
+
+function getInventoryProjection() {
+    let totalInventoryCost = 0;
+    let currentStockValue = 0;
+    let potentialRevenue = 0;
+    let potentialProfit = 0;
+    let expiryAlertCount = 0;
+    
+    const salesData = getInventorySalesData();
+    const today = new Date();
+    
+    DB.inventory.forEach(item => {
+        const qtySold = salesData[item.id] ? salesData[item.id].qtySold : 0;
+        const currentStock = salesData[item.id] ? salesData[item.id].currentStock : item.qty;
+        const expiryStatus = checkExpiryStatus(item.expiryDate);
+        
+        if (expiryStatus !== 'good') {
+            expiryAlertCount++;
+        }
+        
+        totalInventoryCost += item.qty * item.costPrice;
+        currentStockValue += currentStock * item.costPrice;
+        potentialRevenue += currentStock * item.price;
+        potentialProfit += currentStock * (item.price - item.costPrice);
+    });
+    
+    return {
+        totalInventoryCost,
+        currentStockValue,
+        potentialRevenue,
+        potentialProfit,
+        expiryAlertCount
+    };
+}
+
+const navs=document.querySelectorAll('.navbtn');
+navs.forEach(b=>b.addEventListener('click',()=>{
+    navs.forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentSection = b.dataset.tab;
+    showTab(currentSection);
+}));
+
+function showTab(name){
+    document.querySelectorAll('.tabpane').forEach(s=>s.style.display='none');
+    document.getElementById(name).style.display='block';
+    currentSection = name;
+    updateFocusOnSectionChange();
+    render();
+}
+
+function render(){
+updateExportDisplay();
+
+const empBody=document.querySelector('#empTable tbody'); 
+empBody.innerHTML='';
+let totalSalaries=0;
+
+const filteredEmployees = filterEmployees(DB.employees);
+
+filteredEmployees.forEach((e,i)=>{
+  const net=e.salary*e.hours*(1-(e.tax||0)/100);
+  totalSalaries+=net;
+  const originalIndex = DB.employees.findIndex(emp => emp.id === e.id);
+  empBody.innerHTML+=`<tr>
+<td contenteditable="true" oninput="updateEmp(${originalIndex},'id',this.innerText)" tabindex="0">${e.id}</td>
+<td contenteditable="true" oninput="updateEmp(${originalIndex},'name',this.innerText)" tabindex="0">${e.name}</td>
+<td contenteditable="true" oninput="updateEmp(${originalIndex},'position',this.innerText)" tabindex="0">${e.position}</td>
+<td><input type="date" value="${e.employmentDate}" onchange="updateEmp(${originalIndex},'employmentDate',this.value)" tabindex="0"></td>
+<td contenteditable="true" oninput="updateEmp(${originalIndex},'salary',this.innerText)" tabindex="0">${e.salary}</td>
+<td contenteditable="true" oninput="updateEmp(${originalIndex},'hours',this.innerText)" tabindex="0">${e.hours}</td>
+<td contenteditable="true" oninput="updateEmp(${originalIndex},'tax',this.innerText)" tabindex="0">${e.tax||0}</td>
+<td>Rs. ${net.toFixed(2)}</td>
+<td><button onclick="deleteEmp(${originalIndex})" tabindex="0">Delete</button></td>
+</tr>`;
+});
+
+const supBody=document.querySelector('#supTable tbody'); supBody.innerHTML='';
+DB.suppliers.forEach((s,i)=>{
+supBody.innerHTML+=`<tr>
+<td contenteditable="true" oninput="updateSup(${i},'name',this.innerText)" tabindex="0">${s.name}</td>
+<td contenteditable="true" oninput="updateSup(${i},'contact',this.innerText)" tabindex="0">${s.contact}</td>
+<td contenteditable="true" oninput="updateSup(${i},'notes',this.innerText)" tabindex="0">${s.notes}</td>
+<td><button onclick="deleteSup(${i})" tabindex="0">Delete</button></td>
+</tr>`;
+});
+
+const invBody=document.querySelector('#invTable tbody'); invBody.innerHTML='';
+const saleSelect=document.getElementById('saleItem'); saleSelect.innerHTML='';
+const salesData = getInventorySalesData();
+const projection = getInventoryProjection();
+
+document.getElementById('totalInventoryCost').innerText = projection.totalInventoryCost.toFixed(2);
+document.getElementById('currentStockValue').innerText = projection.currentStockValue.toFixed(2);
+document.getElementById('potentialRevenue').innerText = projection.potentialRevenue.toFixed(2);
+document.getElementById('potentialProfit').innerText = projection.potentialProfit.toFixed(2);
+document.getElementById('expiryAlert').innerText = projection.expiryAlertCount;
+
+const expiringProducts = getExpiringProducts();
+const expiryAlertsDiv = document.getElementById('expiryAlerts');
+if (expiringProducts.length > 0) {
+    let alertsHTML = '';
+    expiringProducts.forEach(product => {
+        alertsHTML += `<div class="alert-item">${product.id} - ${product.name} (Expires in ${product.daysUntilExpiry} days, Stock: ${product.currentStock})</div>`;
+    });
+    expiryAlertsDiv.innerHTML = alertsHTML;
+} else {
+    expiryAlertsDiv.innerHTML = '<p>No expiry alerts at the moment.</p>';
+}
+
+const filteredProducts = filterProducts(DB.inventory);
+
+filteredProducts.forEach((i,index)=>{
+    const originalIndex = DB.inventory.findIndex(inv => inv.id === i.id);
+    const qtySold = salesData[i.id] ? salesData[i.id].qtySold : 0;
+    const currentStock = salesData[i.id] ? salesData[i.id].currentStock : i.qty;
+    const totalCost = i.qty * i.costPrice;
+    const profitPerUnit = (i.price - i.costPrice).toFixed(2);
+    const totalProfit = salesData[i.id] ? salesData[i.id].totalProfit : 0;
+    const potentialItemProfit = currentStock * (i.price - i.costPrice);
+    const expiryStatus = checkExpiryStatus(i.expiryDate);
+    const statusClass = expiryStatus === 'expired' ? 'expired' : (expiryStatus === 'expiring-soon' ? 'expiring-soon' : (expiryStatus === 'expiring-14-days' ? 'expiring-soon' : ''));
+    const statusText = expiryStatus === 'expired' ? 'EXPIRED' : (expiryStatus === 'expiring-soon' ? 'EXPIRING SOON' : (expiryStatus === 'expiring-14-days' ? 'EXPIRING SOON' : 'GOOD'));
+    
+    const profitClass = profitPerUnit >= 0 ? 'profit-positive' : 'profit-negative';
+    const totalProfitClass = totalProfit >= 0 ? 'profit-positive' : 'profit-negative';
+    const potentialProfitClass = potentialItemProfit >= 0 ? 'profit-positive' : 'profit-negative';
+    
+    invBody.innerHTML+=`<tr>
+<td contenteditable="true" oninput="updateInv(${originalIndex},'id',this.innerText)" tabindex="0">${i.id}</td>
+<td>${i.barcode || 'N/A'}</td>
+<td contenteditable="true" oninput="updateInv(${originalIndex},'name',this.innerText)" tabindex="0">${i.name}</td>
+<td>${i.qty}</td>
+<td contenteditable="true" oninput="updateInv(${originalIndex},'costPrice',this.innerText)" tabindex="0">Rs. ${i.costPrice}</td>
+<td>Rs. ${totalCost.toFixed(2)}</td>
+<td contenteditable="true" oninput="updateInv(${originalIndex},'price',this.innerText)" tabindex="0">Rs. ${i.price}</td>
+<td><input type="date" value="${i.manufactureDate}" onchange="updateInv(${originalIndex},'manufactureDate',this.value)" tabindex="0"></td>
+<td><input type="date" value="${i.expiryDate}" onchange="updateInv(${originalIndex},'expiryDate',this.value)" tabindex="0"></td>
+<td class="${statusClass}">${statusText}</td>
+<td>${currentStock}</td>
+<td>${qtySold}</td>
+<td class="${profitClass}">Rs. ${profitPerUnit}</td>
+<td class="${totalProfitClass}">Rs. ${totalProfit.toFixed(2)}</td>
+<td class="${potentialProfitClass}">Rs. ${potentialItemProfit.toFixed(2)}</td>
+<td><button onclick="deleteInv(${originalIndex})" tabindex="0">Delete</button></td>
+</tr>`;
+    
+    if (currentStock > 0 && expiryStatus !== 'expired') {
+        saleSelect.innerHTML+=`<option value="${i.id}">${i.id} - ${i.name} (Stock: ${currentStock}, Price: Rs. ${i.price})</option>`;
+    }
+});
+
+const customerSelect = document.getElementById('saleCustomer');
+customerSelect.innerHTML = '<option value="">Walk-in Customer</option>';
+DB.customers.forEach(customer => {
+    customerSelect.innerHTML += `<option value="${customer.id}">${customer.name} (${customer.type})</option>`;
+});
+
+const customerBody = document.querySelector('#customerTable tbody');
+customerBody.innerHTML = '';
+const filteredCustomers = filterCustomers(DB.customers);
+
+filteredCustomers.forEach((c, i) => {
+    const customerSales = DB.sales.filter(s => s.customerId === c.id);
+    const totalSpent = customerSales.reduce((sum, sale) => {
+        const item = DB.inventory.find(inv => inv.id === sale.itemId);
+        return sum + (sale.qty * (item?.price || 0));
+    }, 0);
+    const lastPurchase = customerSales.length > 0 ? 
+        customerSales[customerSales.length - 1].date : 'Never';
+    
+    customerBody.innerHTML += `<tr>
+<td contenteditable="true" oninput="updateCustomer(${i},'id',this.innerText)" tabindex="0">${c.id}</td>
+<td contenteditable="true" oninput="updateCustomer(${i},'name',this.innerText)" tabindex="0">${c.name}</td>
+<td contenteditable="true" oninput="updateCustomer(${i},'phone',this.innerText)" tabindex="0">${c.phone}</td>
+<td contenteditable="true" oninput="updateCustomer(${i},'email',this.innerText)" tabindex="0">${c.email || ''}</td>
+<td>
+    <select onchange="updateCustomer(${i},'type',this.value)" tabindex="0">
+        <option value="regular" ${c.type === 'regular' ? 'selected' : ''}>Regular</option>
+        <option value="premium" ${c.type === 'premium' ? 'selected' : ''}>Premium</option>
+        <option value="wholesale" ${c.type === 'wholesale' ? 'selected' : ''}>Wholesale</option>
+        <option value="corporate" ${c.type === 'corporate' ? 'selected' : ''}>Corporate</option>
+    </select>
+</td>
+<td contenteditable="true" oninput="updateCustomer(${i},'discount',this.innerText)" tabindex="0">${c.discount || 0}</td>
+<td>Rs. ${totalSpent.toFixed(2)}</td>
+<td>${lastPurchase}</td>
+<td><button onclick="deleteCustomer(${i})" tabindex="0">Delete</button></td>
+</tr>`;
+});
+
+const expBody=document.querySelector('#expTable tbody'); expBody.innerHTML='';
+DB.expenses.forEach((ex,i)=>{expBody.innerHTML+=`<tr><td>${ex.title}</td><td>Rs. ${ex.amount}</td><td><button onclick="deleteExp(${i})" tabindex="0">Delete</button></td></tr>`;});
+
+const salesBody=document.querySelector('#salesTable tbody'); salesBody.innerHTML='';
+let totalProfit = 0;
+let totalCOGS = 0;
+DB.sales.forEach((s,i)=>{
+    const item = DB.inventory.find(inv=>inv.id===s.itemId);
+    const customer = s.customerId ? DB.customers.find(c => c.id === s.customerId) : null;
+    const unitCost = item?.costPrice || 0;
+    const unitPrice = item?.price || 0;
+    const revenue = s.qty * unitPrice;
+    const cost = s.qty * unitCost;
+    const profit = revenue - cost;
+    totalProfit += profit;
+    totalCOGS += cost;
+    
+    const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
+    salesBody.innerHTML+=`<tr>
+<td>${customer?.name || 'Walk-in'}</td>
+<td>${item?.id || 'N/A'}</td>
+<td contenteditable="true" oninput="updateSale(${i},'itemId',this.innerText)" tabindex="0">${item?.name || s.itemId}</td>
+<td contenteditable="true" oninput="updateSale(${i},'qty',this.innerText)" tabindex="0">${s.qty}</td>
+<td>Rs. ${unitCost.toFixed(2)}</td>
+<td>Rs. ${unitPrice.toFixed(2)}</td>
+<td>Rs. ${revenue.toFixed(2)}</td>
+<td class="${profitClass}">Rs. ${profit.toFixed(2)}</td>
+<td>${s.date}</td>
+<td><button onclick="deleteSale(${i})" tabindex="0">Delete</button></td>
+</tr>`;
+});
+
+const totalSales = DB.sales.reduce((a,v)=>{
+    const item = DB.inventory.find(inv=>inv.id===v.itemId);
+    return a + (v.qty * (item?.price || 0));
+},0);
+const totalExpenses = DB.expenses.reduce((a,v)=>a+v.amount,0);
+const grossProfit = totalSales - totalCOGS;
+const netProfit = grossProfit - totalExpenses - totalSalaries;
+
+document.getElementById('dashSales').innerText=totalSales.toFixed(2);
+document.getElementById('dashExpenses').innerText=totalExpenses.toFixed(2);
+document.getElementById('dashSalaries').innerText=totalSalaries.toFixed(2);
+document.getElementById('dashCOGS').innerText=totalCOGS.toFixed(2);
+document.getElementById('dashGrossProfit').innerText=grossProfit.toFixed(2);
+document.getElementById('dashProfit').innerText=netProfit.toFixed(2);
+
+document.getElementById('dashProfit').className = netProfit >= 0 ? 'profit-positive' : 'profit-negative';
+document.getElementById('dashGrossProfit').className = grossProfit >= 0 ? 'profit-positive' : 'profit-negative';
+
+setTimeout(updateFocusableElements, 100);
+}
+
+function updateCustomer(i, key, value) {
+    DB.customers[i][key] = key === 'discount' ? Number(value) : value;
+    saveDB();
+    render();
+}
+
+function deleteCustomer(i) {
+    DB.customers.splice(i, 1);
+    saveDB();
+    render();
+}
+
+function updateEmp(i,key,value){DB.employees[i][key]=key==='salary'||key==='hours'||key==='tax'?Number(value):value; saveDB(); render();}
+function deleteEmp(i){DB.employees.splice(i,1); saveDB(); render();}
+function updateSup(i,key,value){DB.suppliers[i][key]=value; saveDB(); render();}
+function deleteSup(i){DB.suppliers.splice(i,1); saveDB(); render();}
+function updateInv(i,key,value){
+    if (key !== 'qty') {
+        DB.inventory[i][key]=key==='costPrice'||key==='price'?Number(value):value; 
+        saveDB(); 
+        render();
+    }
+}
+function deleteInv(i){DB.inventory.splice(i,1); saveDB(); render();}
+function deleteExp(i){DB.expenses.splice(i,1); saveDB(); render();}
+
+function updateSale(i,key,value){
+    if(key==='qty'){
+        const sale = DB.sales[i];
+        const item = DB.inventory.find(inv=>inv.id===sale.itemId);
+        const salesData = getInventorySalesData();
+        const currentStock = salesData[sale.itemId] ? salesData[sale.itemId].currentStock : item.qty;
+        const diff = value - sale.qty;
+        
+        if(currentStock - diff >= 0){
+            DB.sales[i].qty = Number(value);
+            saveDB();
+            render();
+        }else{
+            alert("Not enough current stock!");
+            render();
+        }
+    }else if(key==='itemId'){
+        const oldItemId=DB.sales[i].itemId;
+        const oldQty=DB.sales[i].qty;
+        DB.sales[i].itemId=value;
+        saveDB(); 
+        render();
+    }
+}
+function deleteSale(i){
+    DB.sales.splice(i,1);
+    saveDB();
+    render();
+}
+
+function resetDB(){
+  const key=prompt("Enter secret key to reset all data:");
+  if(key==="123"){DB={employees:[],suppliers:[],inventory:[],expenses:[],sales:[],customers:[]}; saveDB(); render(); alert("All data reset!");}else{alert("Wrong key!");}
+}
+
+function exportCSV() {
+    exportToCSV();
+}
+
+function exportExcel(){
+    const wb=XLSX.utils.book_new();
+    
+    const empWS=XLSX.utils.json_to_sheet(DB.employees.map(e=>({
+        EmployeeID:e.id,
+        Name:e.name,
+        Position:e.position,
+        EmploymentDate:e.employmentDate,
+        SalaryPerHour:e.salary,
+        Hours:e.hours,
+        Tax:e.tax,
+        TotalSalary:e.salary*e.hours*(1-(e.tax||0)/100)
+    })));
+    XLSX.utils.book_append_sheet(wb,empWS,"Employees");
+    
+    const supWS=XLSX.utils.json_to_sheet(DB.suppliers);
+    XLSX.utils.book_append_sheet(wb,supWS,"Suppliers");
+    
+    const salesData = getInventorySalesData();
+    const projection = getInventoryProjection();
+    const expiringProducts = getExpiringProducts();
+    
+    const invWS=XLSX.utils.json_to_sheet(DB.inventory.map(i=>{
+        const qtySold = salesData[i.id] ? salesData[i.id].qtySold : 0;
+        const currentStock = salesData[i.id] ? salesData[i.id].currentStock : i.qty;
+        const totalProfit = salesData[i.id] ? salesData[i.id].totalProfit : 0;
+        const potentialProfit = currentStock * (i.price - i.costPrice);
+        const expiryStatus = checkExpiryStatus(i.expiryDate);
+        
+        return {
+            ProductID:i.id,
+            Barcode:i.barcode || '',
+            ProductName:i.name,
+            QuantityPurchased:i.qty,
+            CostPerUnit:i.costPrice,
+            TotalPurchaseCost:i.qty * i.costPrice,
+            SalePrice:i.price,
+            ManufacturingDate:i.manufactureDate,
+            ExpiryDate:i.expiryDate,
+            Status: expiryStatus === 'expired' ? 'EXPIRED' : (expiryStatus === 'expiring-soon' ? 'EXPIRING SOON' : (expiryStatus === 'expiring-14-days' ? 'EXPIRING SOON' : 'GOOD')),
+            CurrentStock:currentStock,
+            QuantitySold:qtySold,
+            ProfitPerUnit:i.price - i.costPrice,
+            TotalProfit:totalProfit,
+            PotentialProfit:potentialProfit
+        };
+    }));
+    XLSX.utils.book_append_sheet(wb,invWS,"Inventory");
+    
+    const customerWS = XLSX.utils.json_to_sheet(DB.customers.map(c => {
+        const customerSales = DB.sales.filter(s => s.customerId === c.id);
+        const totalSpent = customerSales.reduce((sum, sale) => {
+            const item = DB.inventory.find(inv => inv.id === sale.itemId);
+            return sum + (sale.qty * (item?.price || 0));
+        }, 0);
+        const lastPurchase = customerSales.length > 0 ? 
+            customerSales[customerSales.length - 1].date : 'Never';
+            
+        return {
+            CustomerID: c.id,
+            Name: c.name,
+            Phone: c.phone,
+            Email: c.email || '',
+            Type: c.type,
+            Discount: c.discount || 0,
+            TotalSpent: totalSpent,
+            LastPurchase: lastPurchase
+        };
+    }));
+    XLSX.utils.book_append_sheet(wb, customerWS, "Customers");
+    
+    const projectionWS = XLSX.utils.json_to_sheet([{
+        TotalInventoryCost: projection.totalInventoryCost,
+        CurrentStockValue: projection.currentStockValue,
+        PotentialRevenue: projection.potentialRevenue,
+        PotentialProfit: projection.potentialProfit,
+        ExpiredExpiringItems: projection.expiryAlertCount
+    }]);
+    XLSX.utils.book_append_sheet(wb, projectionWS, "Projection");
+    
+    const expiryAlertsWS = XLSX.utils.json_to_sheet(expiringProducts.map(p=>({
+        ProductID: p.id,
+        ProductName: p.name,
+        ExpiryDate: p.expiryDate,
+        DaysUntilExpiry: p.daysUntilExpiry,
+        CurrentStock: p.currentStock,
+        Status: 'EXPIRING SOON'
+    })));
+    XLSX.utils.book_append_sheet(wb, expiryAlertsWS, "ExpiryAlerts");
+    
+    const salesWS=XLSX.utils.json_to_sheet(DB.sales.map(s=>{
+        const item=DB.inventory.find(i=>i.id===s.itemId);
+        const customer = s.customerId ? DB.customers.find(c => c.id === s.customerId) : null;
+        const cost=item?.costPrice||0;
+        const price=item?.price||0;
+        return {
+            Customer: customer?.name || 'Walk-in',
+            ProductID: item?.id || s.itemId,
+            ProductName: item?.name || 'Unknown',
+            Qty:s.qty,
+            UnitCost:cost,
+            SalePrice:price,
+            Revenue:price*s.qty,
+            CostOfGoods:cost*s.qty,
+            Profit:(price-cost)*s.qty,
+            Date:s.date
+        };
+    }));
+    XLSX.utils.book_append_sheet(wb,salesWS,"Sales");
+    
+    const expWS=XLSX.utils.json_to_sheet(DB.expenses);
+    XLSX.utils.book_append_sheet(wb,expWS,"Expenses");
+    XLSX.writeFile(wb,"BakeryReport.xlsx");
+}
+
+document.getElementById('empForm').addEventListener('submit',e=>{e.preventDefault();
+DB.employees.push({
+    id: empId.value,
+    name: empName.value,
+    position: empPosition.value,
+    employmentDate: empDate.value,
+    salary: Number(empSalary.value),
+    hours: Number(empHours.value),
+    tax: Number(empTax.value)
+});
+saveDB();render();e.target.reset();});
+
+document.getElementById('supForm').addEventListener('submit',e=>{e.preventDefault();
+DB.suppliers.push({name:supName.value,contact:supContact.value,notes:supNotes.value});
+saveDB();render();e.target.reset();});
+
+document.getElementById('invForm').addEventListener('submit',e=>{e.preventDefault();
+let barcode = document.getElementById('invBarcode').value;
+if (!barcode) {
+    barcode = document.getElementById('invId').value + Math.floor(1000 + Math.random() * 9000);
+}
+
+DB.inventory.push({
+    id: invId.value,
+    name: invName.value,
+    barcode: barcode,
+    qty: Number(invQty.value),
+    costPrice: Number(invCostPrice.value),
+    price: Number(invPrice.value),
+    manufactureDate: invManufactureDate.value,
+    expiryDate: invExpiryDate.value
+});
+saveDB();render();e.target.reset();});
+
+document.getElementById('salesForm').addEventListener('submit',e=>{e.preventDefault();
+const itemId=saleItem.value,qty=Number(saleQty.value); 
+const customerId = document.getElementById('saleCustomer').value;
+const salesData = getInventorySalesData();
+const currentStock = salesData[itemId] ? salesData[itemId].currentStock : DB.inventory.find(i=>i.id===itemId)?.qty;
+
+if(currentStock >= qty){
+    DB.sales.push({
+        itemId,
+        customerId: customerId || null,
+        qty,
+        date:new Date().toLocaleString()
+    }); 
+    saveDB(); 
+    render(); 
+    e.target.reset();
+}else{alert("Not enough current stock!");}});
+
+document.getElementById('customerForm').addEventListener('submit',e=>{e.preventDefault();
+DB.customers.push({
+    id: customerId.value,
+    name: customerName.value,
+    phone: customerPhone.value,
+    email: customerEmail.value,
+    address: customerAddress.value,
+    type: customerType.value,
+    discount: Number(customerDiscount.value)
+});
+saveDB();render();e.target.reset();});
+
+document.getElementById('expForm').addEventListener('submit',e=>{e.preventDefault();
+DB.expenses.push({title:expTitle.value,amount:Number(expAmount.value)}); saveDB(); render(); e.target.reset();});
+
+// Initialize everything
+initializeSecurity();
+initializeFocus();
+initializeAutoExport();
+render();
+</script>
+</body>
+</html>
